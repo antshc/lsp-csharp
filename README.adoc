@@ -122,6 +122,53 @@ source ~/.bashrc
 omnisharp --version
 ----
 
+=== Error: GLIBC_PRIVATE not found / Segmentation fault
+
+Example:
+
+[source,text]
+----
+Failed to load ... libcoreclr.so
+/lib/x86_64-linux-gnu/libpthread.so.0: version `GLIBC_PRIVATE' not found
+Segmentation fault (core dumped)
+----
+
+Cause: Snap .NET mixes Snap libraries with host Ubuntu libraries. This is a common runtime compatibility issue.
+
+=== Fix 1: Install Native APT .NET SDK (Recommended)
+
+Remove Snap version and install Microsoft package version.
+
+[source,bash]
+----
+sudo snap remove dotnet-sdk
+wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+sudo dpkg -i /tmp/packages-microsoft-prod.deb
+sudo apt update
+sudo apt install -y dotnet-sdk-8.0
+dotnet --info
+omnisharp --version
+----
+
+=== Fix 2: Use Self-Contained OmniSharp (Best Fast Fix)
+
+Uses bundled runtime, avoids system .NET issues.
+
+[source,bash]
+----
+sudo rm -rf /opt/omnisharp && sudo mkdir -p /opt/omnisharp && sudo chown "$USER":"$USER" /opt/omnisharp && curl -L https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.39.15/omnisharp-linux-x64.tar.gz -o /tmp/omnisharp.tar.gz && tar -xzf /tmp/omnisharp.tar.gz -C /opt/omnisharp && chmod +x /opt/omnisharp/OmniSharp && sudo ln -sf /opt/omnisharp/OmniSharp /usr/local/bin/omnisharp && omnisharp --version
+----
+
+=== Fix 3: Unset DOTNET_ROOT
+
+If using self-contained OmniSharp, remove Snap runtime override.
+
+[source,bash]
+----
+unset DOTNET_ROOT
+omnisharp --version
+----
+
 === Verify Environment
 
 [source,bash]
@@ -138,17 +185,8 @@ Register the runtime location:
 
 [source,bash]
 ----
-echo "/snap/dotnet-sdk/current" | sudo tee /etc/dotnet/install_location
+echo "/usr/share/dotnet" | sudo tee /etc/dotnet/install_location
 omnisharp --version
-----
-
-=== Use Self-Contained OmniSharp (Recommended)
-
-This package includes its own runtime and avoids .NET path issues.
-
-[source,bash]
-----
-sudo rm -rf /opt/omnisharp && sudo mkdir -p /opt/omnisharp && sudo chown "$USER":"$USER" /opt/omnisharp && curl -L https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.39.15/omnisharp-linux-x64.tar.gz -o /tmp/omnisharp.tar.gz && tar -xzf /tmp/omnisharp.tar.gz -C /opt/omnisharp && chmod +x /opt/omnisharp/OmniSharp && sudo ln -sf /opt/omnisharp/OmniSharp /usr/local/bin/omnisharp && omnisharp --version
 ----
 
 === Check Installed .NET Paths
@@ -167,4 +205,12 @@ find / -name libhostfxr.so 2>/dev/null | head
 which omnisharp
 ls -l /usr/local/bin/omnisharp
 ls -l /opt/omnisharp
+----
+
+=== Remove OmniSharp
+
+[source,bash]
+----
+sudo rm -rf /opt/omnisharp
+sudo rm -f /usr/local/bin/omnisharp
 ----
