@@ -1,240 +1,61 @@
-= Install copilot cli linux
+Currently works lsp servers with the
+
+== Install copilot cli linux
 
 [source,bash]
 ----
 curl -fsSL https://gh.io/copilot-install | bash
 ----
-
-= Install OmniSharp LSP on Ubuntu 22.04
-
-== Option 1: Single Copy-Paste Command
-
+== Install latest gh
 [source,bash]
 ----
-sudo apt update && sudo apt install -y curl tar gzip ca-certificates && sudo mkdir -p /opt/omnisharp && sudo chown "$USER":"$USER" /opt/omnisharp && curl -L https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.39.15/omnisharp-linux-x64-net6.0.tar.gz -o /tmp/omnisharp.tar.gz && tar -xzf /tmp/omnisharp.tar.gz -C /opt/omnisharp && chmod +x /opt/omnisharp/OmniSharp && sudo ln -sf /opt/omnisharp/OmniSharp /usr/local/bin/omnisharp && omnisharp --version
+curl -fsSL https://gh.io/copilot-install | bash
 ----
 
-== Option 2: Step-by-Step Installation
-
-=== 1. Install Dependencies
-
+== Install lsp setup skill
+Works only for dotnet 10 sdk with the roslyn server
 [source,bash]
 ----
-sudo apt update
-sudo apt install -y curl tar gzip ca-certificates
+gh skill install github/awesome-copilot lsp-setup
 ----
-
-=== 2. Create Install Directory
-
-[source,bash]
-----
-sudo mkdir -p /opt/omnisharp
-sudo chown "$USER":"$USER" /opt/omnisharp
-----
-
-=== 3. Download OmniSharp
-
-[source,bash]
-----
-curl -L https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.39.15/omnisharp-linux-x64-net6.0.tar.gz -o /tmp/omnisharp.tar.gz
-----
-
-=== 4. Extract OmniSharp
-
-[source,bash]
-----
-tar -xzf /tmp/omnisharp.tar.gz -C /opt/omnisharp
-----
-
-=== 5. Make OmniSharp Executable
-
-[source,bash]
-----
-chmod +x /opt/omnisharp/OmniSharp
-----
-
-=== 6. Add OmniSharp to PATH
-
-[source,bash]
-----
-sudo ln -sf /opt/omnisharp/OmniSharp /usr/local/bin/omnisharp
-----
-
-=== 7. Verify Installation
-
-[source,bash]
-----
-omnisharp --version
-----
-
-== Run OmniSharp as LSP
-
-[source,bash]
-----
-omnisharp -lsp
-----
-
-== Run OmniSharp for a Specific Solution
-
-[source,bash]
-----
-omnisharp -lsp -s /path/to/YourSolution.sln
-----
-
-== Example LSP Client Config
-
 [source,json]
 ----
 {
-  "command": "omnisharp",
-  "args": ["-lsp", "-s", "/path/to/YourSolution.sln"],
-  "extensions": [".cs"]
+  "lspServers": {
+    "csharp": {
+      "command": "dotnet",
+      "args": ["dnx", "roslyn-language-server", "--yes", "--prerelease", "--", "--stdio", "--autoLoadProjects"],
+      "fileExtensions": {
+        ".cs": "csharp"
+      }
+    }
+  }
 }
 ----
 
-== Remove OmniSharp
 
-[source,bash]
+== Install OmniSharp LSP on Ubuntu 22.04
+* For dotnet < 9 version install the .net using apt installation (DO not use snap)
+* install standalone omnisharp
+Note: not all lsp functions works. The incomingCalls, outgoingCalls, rename doesnt work.
+[source,json]
 ----
-sudo rm -rf /opt/omnisharp
-sudo rm -f /usr/local/bin/omnisharp
-----
-
-== Troubleshooting
-
-=== Error: libhostfxr.so could not be found
-
-Cause: The `omnisharp-linux-x64-net6.0` package is framework-dependent and OmniSharp cannot locate the installed .NET runtime.
-
-=== Fix for Snap-installed .NET SDK
-
-If .NET was installed using Snap, configure `DOTNET_ROOT`.
-
-==== Temporary Fix (Current Shell)
-
-[source,bash]
-----
-export DOTNET_ROOT=/snap/dotnet-sdk/current
-export PATH="$DOTNET_ROOT:$PATH"
-omnisharp --version
+{
+    "lspServers": {
+        "csharp": {
+            "command": "omnisharp",
+            "args": ["-lsp", "--stdio", "-s", "/home/dev/_sources/benefits/PaylocityBenefitsCalculator.sln"],
+            "fileExtensions": {
+                ".cs": "csharp"
+            },
+            "initializationTimeoutMs": 120000
+        }
+    }
+}
 ----
 
-==== Permanent Fix
+== Install charp-ls
+* Requires custom skill to make it work.
 
-Add `DOTNET_ROOT` and update `PATH` only if the Snap .NET path is not already present.
 
-[source,bash]
-----
-cat <<'EOF' >> ~/.bashrc
 
-# Snap .NET SDK
-export DOTNET_ROOT=/snap/dotnet-sdk/current
-if [[ ":$PATH:" != *":/snap/dotnet-sdk/current:"* ]]; then
-  export PATH="/snap/dotnet-sdk/current:$PATH"
-fi
-EOF
-
-source ~/.bashrc
-omnisharp --version
-----
-
-Verify:
-
-[source,bash]
-----
-echo $DOTNET_ROOT
-echo $PATH | tr ':' '\n' | grep dotnet
-----
-
-=== Error: GLIBC_PRIVATE not found / Segmentation fault
-
-Example:
-
-[source,text]
-----
-Failed to load ... libcoreclr.so
-/lib/x86_64-linux-gnu/libpthread.so.0: version `GLIBC_PRIVATE' not found
-Segmentation fault (core dumped)
-----
-
-Cause: Snap .NET mixes Snap libraries with host Ubuntu libraries. This is a common runtime compatibility issue.
-
-=== Fix 1: Install Native APT .NET SDK (Recommended)
-
-Remove Snap version and install Microsoft package version.
-
-[source,bash]
-----
-sudo snap remove dotnet-sdk
-wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
-sudo dpkg -i /tmp/packages-microsoft-prod.deb
-sudo apt update
-sudo apt install -y dotnet-sdk-8.0
-dotnet --info
-omnisharp --version
-----
-
-=== Fix 2: Use Self-Contained OmniSharp (Best Fast Fix)
-
-Uses bundled runtime, avoids system .NET issues.
-
-[source,bash]
-----
-sudo rm -rf /opt/omnisharp && sudo mkdir -p /opt/omnisharp && sudo chown "$USER":"$USER" /opt/omnisharp && curl -L https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.39.15/omnisharp-linux-x64.tar.gz -o /tmp/omnisharp.tar.gz && tar -xzf /tmp/omnisharp.tar.gz -C /opt/omnisharp && chmod +x /opt/omnisharp/OmniSharp && sudo ln -sf /opt/omnisharp/OmniSharp /usr/local/bin/omnisharp && omnisharp --version
-----
-
-=== Fix 3: Unset DOTNET_ROOT
-
-If using self-contained OmniSharp, remove Snap runtime override.
-
-[source,bash]
-----
-unset DOTNET_ROOT
-omnisharp --version
-----
-
-=== Verify Environment
-
-[source,bash]
-----
-echo $DOTNET_ROOT
-which dotnet
-dotnet --info
-omnisharp --version
-----
-
-=== Error: OmniSharp Still Cannot Find Runtime
-
-Register the runtime location:
-
-[source,bash]
-----
-echo "/usr/share/dotnet" | sudo tee /etc/dotnet/install_location
-omnisharp --version
-----
-
-=== Check Installed .NET Paths
-
-[source,bash]
-----
-which dotnet
-dotnet --info
-find / -name libhostfxr.so 2>/dev/null | head
-----
-
-=== Verify OmniSharp Binary
-
-[source,bash]
-----
-which omnisharp
-ls -l /usr/local/bin/omnisharp
-ls -l /opt/omnisharp
-----
-
-=== Remove OmniSharp
-
-[source,bash]
-----
-sudo rm -rf /opt/omnisharp
-sudo rm -f /usr/local/bin/omnisharp
-----
