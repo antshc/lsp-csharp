@@ -121,12 +121,29 @@ omnisharp --version
 
 ==== Permanent Fix
 
+Add `DOTNET_ROOT` and update `PATH` only if the Snap .NET path is not already present.
+
 [source,bash]
 ----
-echo 'export DOTNET_ROOT=/snap/dotnet-sdk/current' >> ~/.bashrc
-echo 'export PATH="$DOTNET_ROOT:$PATH"' >> ~/.bashrc
+cat <<'EOF' >> ~/.bashrc
+
+# Snap .NET SDK
+export DOTNET_ROOT=/snap/dotnet-sdk/current
+if [[ ":$PATH:" != *":/snap/dotnet-sdk/current:"* ]]; then
+  export PATH="/snap/dotnet-sdk/current:$PATH"
+fi
+EOF
+
 source ~/.bashrc
 omnisharp --version
+----
+
+Verify:
+
+[source,bash]
+----
+echo $DOTNET_ROOT
+echo $PATH | tr ':' '\n' | grep dotnet
 ----
 
 === Error: GLIBC_PRIVATE not found / Segmentation fault
