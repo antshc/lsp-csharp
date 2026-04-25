@@ -92,3 +92,79 @@ omnisharp -lsp -s /path/to/YourSolution.sln
 sudo rm -rf /opt/omnisharp
 sudo rm -f /usr/local/bin/omnisharp
 ----
+
+== Troubleshooting
+
+=== Error: libhostfxr.so could not be found
+
+Cause: The `omnisharp-linux-x64-net6.0` package is framework-dependent and OmniSharp cannot locate the installed .NET runtime.
+
+=== Fix for Snap-installed .NET SDK
+
+If .NET was installed using Snap, configure `DOTNET_ROOT`.
+
+==== Temporary Fix (Current Shell)
+
+[source,bash]
+----
+export DOTNET_ROOT=/snap/dotnet-sdk/current
+export PATH="$DOTNET_ROOT:$PATH"
+omnisharp --version
+----
+
+==== Permanent Fix
+
+[source,bash]
+----
+echo 'export DOTNET_ROOT=/snap/dotnet-sdk/current' >> ~/.bashrc
+echo 'export PATH="$DOTNET_ROOT:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+omnisharp --version
+----
+
+=== Verify Environment
+
+[source,bash]
+----
+echo $DOTNET_ROOT
+which dotnet
+dotnet --info
+omnisharp --version
+----
+
+=== Error: OmniSharp Still Cannot Find Runtime
+
+Register the runtime location:
+
+[source,bash]
+----
+echo "/snap/dotnet-sdk/current" | sudo tee /etc/dotnet/install_location
+omnisharp --version
+----
+
+=== Use Self-Contained OmniSharp (Recommended)
+
+This package includes its own runtime and avoids .NET path issues.
+
+[source,bash]
+----
+sudo rm -rf /opt/omnisharp && sudo mkdir -p /opt/omnisharp && sudo chown "$USER":"$USER" /opt/omnisharp && curl -L https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.39.15/omnisharp-linux-x64.tar.gz -o /tmp/omnisharp.tar.gz && tar -xzf /tmp/omnisharp.tar.gz -C /opt/omnisharp && chmod +x /opt/omnisharp/OmniSharp && sudo ln -sf /opt/omnisharp/OmniSharp /usr/local/bin/omnisharp && omnisharp --version
+----
+
+=== Check Installed .NET Paths
+
+[source,bash]
+----
+which dotnet
+dotnet --info
+find / -name libhostfxr.so 2>/dev/null | head
+----
+
+=== Verify OmniSharp Binary
+
+[source,bash]
+----
+which omnisharp
+ls -l /usr/local/bin/omnisharp
+ls -l /opt/omnisharp
+----
