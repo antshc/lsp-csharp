@@ -1,0 +1,94 @@
+= Install OmniSharp LSP on Ubuntu 22.04
+
+== Option 1: Single Copy-Paste Command
+
+[source,bash]
+----
+sudo apt update && sudo apt install -y curl tar gzip ca-certificates && sudo mkdir -p /opt/omnisharp && sudo chown "$USER":"$USER" /opt/omnisharp && curl -L https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.39.15/omnisharp-linux-x64-net6.0.tar.gz -o /tmp/omnisharp.tar.gz && tar -xzf /tmp/omnisharp.tar.gz -C /opt/omnisharp && chmod +x /opt/omnisharp/OmniSharp && sudo ln -sf /opt/omnisharp/OmniSharp /usr/local/bin/omnisharp && omnisharp --version
+----
+
+== Option 2: Step-by-Step Installation
+
+=== 1. Install Dependencies
+
+[source,bash]
+----
+sudo apt update
+sudo apt install -y curl tar gzip ca-certificates
+----
+
+=== 2. Create Install Directory
+
+[source,bash]
+----
+sudo mkdir -p /opt/omnisharp
+sudo chown "$USER":"$USER" /opt/omnisharp
+----
+
+=== 3. Download OmniSharp
+
+[source,bash]
+----
+curl -L https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.39.15/omnisharp-linux-x64-net6.0.tar.gz -o /tmp/omnisharp.tar.gz
+----
+
+=== 4. Extract OmniSharp
+
+[source,bash]
+----
+tar -xzf /tmp/omnisharp.tar.gz -C /opt/omnisharp
+----
+
+=== 5. Make OmniSharp Executable
+
+[source,bash]
+----
+chmod +x /opt/omnisharp/OmniSharp
+----
+
+=== 6. Add OmniSharp to PATH
+
+[source,bash]
+----
+sudo ln -sf /opt/omnisharp/OmniSharp /usr/local/bin/omnisharp
+----
+
+=== 7. Verify Installation
+
+[source,bash]
+----
+omnisharp --version
+----
+
+== Run OmniSharp as LSP
+
+[source,bash]
+----
+omnisharp -lsp
+----
+
+== Run OmniSharp for a Specific Solution
+
+[source,bash]
+----
+omnisharp -lsp -s /path/to/YourSolution.sln
+----
+
+== Example LSP Client Config
+
+[source,json]
+----
+{
+  "command": "omnisharp",
+  "args": ["-lsp", "-s", "/path/to/YourSolution.sln"],
+  "extensions": [".cs"]
+}
+----
+
+== Remove OmniSharp
+
+[source,bash]
+----
+sudo rm -rf /opt/omnisharp
+sudo rm -f /usr/local/bin/omnisharp
+----
