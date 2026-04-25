@@ -1,3 +1,10 @@
+= Install copilot cli linux
+
+[source,bash]
+----
+curl -fsSL https://gh.io/copilot-install | bash
+----
+
 = Install OmniSharp LSP on Ubuntu 22.04
 
 == Option 1: Single Copy-Paste Command
